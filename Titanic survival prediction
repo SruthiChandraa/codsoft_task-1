@@ -1,0 +1,49 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from google.colab import files
+
+print("Please upload the Titanic dataset CSV file:")
+uploaded = files.upload()
+file_name = list(uploaded.keys())[0]
+df = pd.read_csv(file_name)
+
+print("Dataset Preview:")
+print(df.head())
+
+df['Age'] = df['Age'].fillna(df['Age'].median())
+df['Embarked'] = df['Embarked'].fillna(df['Embarked'].mode()[0])
+df['Fare'] = df['Fare'].fillna(df['Fare'].median())
+
+label_encoder = LabelEncoder()
+df['Sex'] = label_encoder.fit_transform(df['Sex'])
+df['Embarked'] = label_encoder.fit_transform(df['Embarked'])
+
+features = ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
+target = 'Survived'
+
+X = df[features]
+y = df[target]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+y_test_pred = model.predict(X_test)
+
+print("Testing Accuracy Score:", accuracy_score(y_test, y_test_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_test_pred))
+print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_test_pred))
+
+
+new_passenger = [[3, 1, 28, 0, 0, 15.50, 2]]
+new_passenger_scaled = scaler.transform(new_passenger)
+new_prediction = model.predict(new_passenger_scaled)
+print("\nNew Passenger Prediction (0 = Not Survived, 1 = Survived):", new_prediction[0])
